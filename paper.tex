@@ -19,7 +19,7 @@
 \setlength{\pdfpagewidth}{8.5in}
 \setlength{\pdfpageheight}{11in}
 \pdfinfo{
-/Title (Insert Your Title Here)
+/Title (On Extensibility and Personalizability of Multi-Modal Trip Planning)
 /Author (Put All Your Authors Here, Separated by Commas)}
 \setcounter{secnumdepth}{0}  
 
@@ -55,123 +55,157 @@
 % proceedings, working notes, and technical reports.
 %
 \title{On Extensibility and Personalizability of Multi-Modal Trip Planning}
-\author{AAAI Press\\
-Association for the Advancement of Artificial Intelligence\\
-2275 East Bayshore Road, Suite 160\\
-Palo Alto, California 94303\\
+\author{
+	Xudong Liu\\
+	Department of Computer Science\\
+	University of Kentucky\\
+	329 Rose Street\\
+	Lexington, KY 40506\\
+	USA
+	\And
+	PARC People\\
+	Palo Alto Research Center\\
+	3333 Coyote Hill Road\\
+	Palo Alto, CA 94304\\
+	USA
 }
 \maketitle
 \begin{abstract}
-	In the setting of multi-modal trip planning, it is essential for
-	the planner to allow users to upload auxiliary data of interest,
-	let them express personal constraints and preferences,
-	and compute optimal trips accordingly.
-	In this work, we designed and implemented a multi-modal trip
-	planning framework that is both extensible and personalizable.
-	%We conducted a user study on the feasibility of the features of
-	%our planner, and showed that the features are desirable and have
-	%great potential value in mobility marketplace. 
-	To this end, we developed a hipergraph-based trip planner that 
-	accommodates constraints specified as a theory in the 
-	\tit{linear temporal logic} and preferences as a 
-	user-specific \tit{preferential cost function} 
-	to compute optimal routes using the A* algorithm.
+	Trip planning is a practical task that has drawn
+	extensive attention from the AI planning and scheduling community
+	and the industrial/commercial sectors.
+	In this paper, we consider the setting of the \tit{multi-modal}
+	trip planning, where users can exploit different transportation
+	modes, such as walking, biking, public transit, and taxi.
+	In such a context, it would be of benefit if the
+	user was able to extend the \tit{cost base}, including traveling time 
+	and fare, of the planner, and to personalize the planner according
+	to her own constraints and preferences.
+	To this end, we designed and developed a hipergraph-based multi-modal
+	trip planner that allows users to upload auxiliary cost metrics (e.g.,
+	crime rates), to specify constraints as a theory in the 
+	\tit{linear temporal logic}, and to express preferences as a 
+	\tit{preferential cost function}.
 \end{abstract}
 
 \section{Introduction}
-%% \begin{itemize}
-%% 	\setlength\itemsep{1pt}
-%% 	\item What's the problem: to design and implement a trip planning
-%% 				system that is multi-modal, extensible and personalizable.
-%% 	\item Why is it important: a story-telling example here should suffice.
-%% 	\item Why is it hard: not straightforward how to represent and reason
-%% 				about user constraints and preferences, etc.
-%% 	\item How did we solve it: allowing the user to upload data and specify
-%% 				constraints and preferences as LTL formulas and preferential
-%% 				cost functions, respectively.  Then, these constraints and
-%% 				preferences are integrated into the A* search.
-%% 	\item How did we evaluate the features and what are the results:
-%% 				ceteris paribus experimentation setup on AMT and results
-%% \end{itemize}
+Trip planning, as an application of planning and scheduling,
+has seen substansive implementations by researchers and
+developers\cite{bast2015route}.
+Some of the planning systems are \tit{multi-modal}; that is,
+combining distinct transportation modes, the trip planners
+compute optimal routes from sources to destinations.
+This notion of ``optimality" generally refers to the computed routes
+having minimal total time or total fare.
 
-\begin{itemize}
-	\item What's the problem: personalized trip planning: find trips that
-	  are optimal in the eyes of a user, who doesn't care about mode or
-	  provider boundaries, and whose preferences may be more faceted than
-	  ``fastest'' or ``cheapest''.
-	\item Why is it hard: the computational complexity of searching
-	  combinations of multiple modes that can be combined freely is high
-	  (PSPACE-complete\cite{}) which is why existing trip planner exploit problem
-	  structure (such as only one mode per trip) and predefined
-	  preferences (optimization metrics)
-	\item How did we solve it: Using a high-performance graph search
-	  engine\cite{}, we implemented a multi-modal trip planner that uses pure
-	  graph-search. This allows us to flexibly combine various modes
-	  (e.g., car, train, cab, walk) and declarative change soft and hard
-	  constraints. The planner can take constraints expressed in linear
-	  temporal logic to constrain the search space (e.g., never bike after
-	  transit, i.e., I don't want to take my bike on the bus or train).
-	  The planner uses a weighted sum over several metrics (e.g., time
-	  overall, time spend on transit, cost) which can be re-weighted based
-	  on different user preferences. Finally the planner allows the user
-	  to upload {\em new} mapping data over which to express hard and/or
-	  soft constraints. For instance, a user might upload a map of crime
-	  in the city, and ask the trip planner to never walk at night through
-	  an area where crime is frequent.
-%	\item How did we evaluate the features and what are the results:
-%	  ceteris paribus experimentation setup on Amazon Mechanical 
-%		Turk (MTurk\footnote{\url{http://mturk.amazon.com}}) and results, 
-%		asking users to pick between two different trips, one being limited by the
-%	  capabilities of existing planners, and one exhibiting features only
-%	  available in our trip planner.
-\end{itemize}
+However, in the eyes of a user, it may be more faceted than just
+``fastest" or ``cheapest."
+For instance, for a college student who specifies that she will
+only walk or take public transit in a trip from Palo Alto to
+San Francisco, the computed plan is not necessarily the fastest
+(e.g., taking a cab could be faster)
+or the cheapest (e.g., walking all the way has no fare).
+This happens when a user tells the planner her hard constraints,
+called \tit{constraints}.  
+The planner then needs to either satisfy the 
+constraints in the search process or return failure because they are
+over-restrictive.
+Moreover, the user might want to further customize the planner by
+describing soft constraints, called \tit{preferences}.
+For example, an agent wants to travel from school to
+downtown, and prefers biking to taking the bus.
+Thus, a trip with more biking than bus may be considered better for
+the agent than the one with more bus than biking.
+In this case, the planner will need to accommodate user preferences
+whenever possilbe in the search of optimal solutions.
 
-
-
-
-\section{Related Work}
-\begin{itemize}
-	\setlength\itemsep{1pt}
-	\item Summarize related work on multi-modal trip planning.
-	\item Summarize related work on constraints and preferences in planning.
-		\begin{itemize}
-			\setlength\itemsep{0pt}
-			\item LTL in planning.
-			\item Numeric/ordinal/qualitative preferences in planning.
-		\end{itemize}
-	\item Summarize related work on VOT (Value-of-Time).
-\end{itemize}
-Constraints and preferences in planning have been studied in the 
-literature.
+Representing and reasoning about constraints and preferences are
+fundamental to decision making in automated planning and scheduling
+in artificial intelligence.
 Son and Pontelli presented a declarative preference language, 
 $\mathcal{PP}$, to represent ordinal preferences (e.g., basic desires,
 atomic preferences and general preferences) between trajectories of 
-a planning problem~\cite{son2004planning}.
+a planning problem\cite{son2004planning}.
 Bienvenu et al. proposed a first-order preference language, $\mathcal{LPP}$, 
 extending $\mathcal{PP}$ by allowing the specification of quantified qualitative
-preferences~\cite{bienvenu2011specifying}.
-Bast et al. surveyed algorithms, including Dijkstra and A*, in the setting of
-multi-modal transportation networks ~\cite{bast2015route}.
+preferences\cite{bienvenu2011specifying}.
 Modesti and Sciomachen introduced an ad hoc utility function for weighing
-the arcs both with their time and monetary cost~\cite{modesti1998utility}.
-Economic models capturing the trade-off between travel time and travel
-cost have been presented~\cite{antoniou2007methodology}.
+the arcs both with their time and fare\cite{modesti1998utility}.
+This relationship between time and fare in the setting of transportation
+was studied, and economic models capturing the trade-off between the two
+was presented\cite{antoniou2007methodology}.
+
+However, relatively limited effort has been devoted to designing and
+implementing real-world multi-modal trip planners that captures user
+constraints and preferences over the \tit{cost base}, possibly
+extended from the user with auxiliary \tit{cost metrics},
+such as crime rates and pollution statistics.
+
+Using a high-performance graph search
+engine\cite{zhou2011dynamic}, we designed and implemented a 
+multi-modal trip planner that uses pure
+graph-search. This allows us to flexibly combine various modes
+(e.g., walk, bike, car, public transit, and taxi) and 
+declaratively change constraints and preferences. 
+The planner allows the user
+to upload \tit{new} mapping data over which to express
+constraints and preferences.  For instance, a user might upload a map of crime
+in the city, and ask the trip planner to avoid areas where crime is frequent.
+Then, the planner takes constraints expressed in \tit{linear
+temporal logic} to constrain the search space (e.g., never bike after
+transit, and never walk through bad neighborhoods).
+Finally, the planner uses a weighted sum, called \tit{preferential cost function}, 
+over several cost metrics (e.g., time spend biking, fare on public transit, 
+and overall crimes walking through) which can be re-weighted based
+on different user preferences. 
+
+%\begin{itemize}
+%	\item What's the problem: personalized trip planning: find trips that
+%	  are optimal in the eyes of a user, who doesn't care about mode or
+%	  provider boundaries, and whose preferences may be more faceted than
+%	  ``fastest'' or ``cheapest''.
+%	\item Why is it hard: the computational complexity of searching
+%	  combinations of multiple modes that can be combined freely is high
+%	  (PSPACE-complete\cite{}) which is why existing trip planner exploit problem
+%	  structure (such as only one mode per trip) and predefined
+%	  preferences (optimization metrics)
+%	\item How did we solve it: Using a high-performance graph search
+%	  engine\cite{}, we implemented a multi-modal trip planner that uses pure
+%	  graph-search. This allows us to flexibly combine various modes
+%	  (e.g., car, train, cab, walk) and declarative change soft and hard
+%	  constraints. The planner can take constraints expressed in linear
+%	  temporal logic to constrain the search space (e.g., never bike after
+%	  transit, i.e., I don't want to take my bike on the bus or train).
+%	  The planner uses a weighted sum over several metrics (e.g., time
+%	  overall, time spend on transit, cost) which can be re-weighted based
+%	  on different user preferences. Finally the planner allows the user
+%	  to upload {\em new} mapping data over which to express hard and/or
+%	  soft constraints. For instance, a user might upload a map of crime
+%	  in the city, and ask the trip planner to never walk at night through
+%	  an area where crime is frequent.
+%%	\item How did we evaluate the features and what are the results:
+%%	  ceteris paribus experimentation setup on Amazon Mechanical 
+%%		Turk (MTurk\footnote{\url{http://mturk.amazon.com}}) and results, 
+%%		asking users to pick between two different trips, one being limited by the
+%%	  capabilities of existing planners, and one exhibiting features only
+%%	  available in our trip planner.
+%\end{itemize}
 
 
 \section{Extensibility}
-\begin{itemize}
-	\setlength\itemsep{1pt}
-	\item Explain in detail what extensibility means.
-	\item Describe the input.
-	\item Describe how we incorporate the auxiliary data into the planner.
-\end{itemize}
+%\begin{itemize}
+%	\setlength\itemsep{1pt}
+%	\item Explain in detail what extensibility means.
+%	\item Describe the input.
+%	\item Describe how we incorporate the auxiliary data into the planner.
+%\end{itemize}
 Allowing users to upload their own data sets of interests is an important
 step towards customization of a trip planner.
-We designed a framework where a user can load the data sets (e.g., crime
+We designed a framework where a user can upload auxiliary cost 
+metric data (e.g., crime
 statistics and pollution data) into the planner,
 and the planner will compute an optimal route accordingly.
 
-\subsection{Auxiliary Data}
 The user-created data are the auxiliary data that is represented as pairs
 of latitude and longitude degrees.
 To merge these lat-long pairs into the planner, we performed a neighborhood
@@ -213,16 +247,16 @@ a preferential cost function (PCF), and implemented our planner leveraging the
 widely-used graph search algorithm the A*.
 
 \subsection{Constraints}
-\begin{itemize}
-	\setlength\itemsep{1pt}
-	\item Describe syntax and semantics of LTL in the setting of trip planning.
-	\begin{itemize}
-		\setlength\itemsep{0pt}
-		\item Specifically, we need to point out the ``after" temporal connective,
-					and we need to describe the semantics: what is a plan, why we can
-					eliminate actions and put them as state attributes instead, etc.
-	\end{itemize}
-\end{itemize}
+%\begin{itemize}
+%	\setlength\itemsep{1pt}
+%	\item Describe syntax and semantics of LTL in the setting of trip planning.
+%	\begin{itemize}
+%		\setlength\itemsep{0pt}
+%		\item Specifically, we need to point out the ``after" temporal connective,
+%					and we need to describe the semantics: what is a plan, why we can
+%					eliminate actions and put them as state attributes instead, etc.
+%	\end{itemize}
+%\end{itemize}
 As constraints in the setting of trip planning are often declarative and
 temporal, our choice of LTL is straightforward.
 We now give a brief review of linear temporal logic (LTL).
@@ -269,22 +303,22 @@ Finally, we know $\sigma_3 \models \psi$, as the mode is always neither biking n
 
 \begin{figure}[!ht]
   \centering
-    \includegraphics[width=0.5\textwidth]{figs/trajectories.pdf}
+    \includegraphics[width=0.5\textwidth]{figs/result1.png}
   \caption{State transition diagram\label{fig:trjs}}
 \end{figure}
 
 
 \subsection{Preferences}
-\begin{itemize}
-	\setlength\itemsep{1pt}
-	\item Describe our preferential cost function (PCF).
-	\begin{itemize}
-		\setlength\itemsep{0pt}
-		\item Describe why and how we break down time and money.
-		\item Describe why and how we design coefficients to these time and money pieces.
-		\item Describe why and how we design the two ratios: dollars per hour and dollars per aux.
-	\end{itemize}
-\end{itemize}
+%\begin{itemize}
+%	\setlength\itemsep{1pt}
+%	\item Describe our preferential cost function (PCF).
+%	\begin{itemize}
+%		\setlength\itemsep{0pt}
+%		\item Describe why and how we break down time and money.
+%		\item Describe why and how we design coefficients to these time and money pieces.
+%		\item Describe why and how we design the two ratios: dollars per hour and dollars per aux.
+%	\end{itemize}
+%\end{itemize}
 
 A state is described as a set of \tit{state variables}.
 The state variables of a state $S$ include the transportation mode $M$ that led to $S$,
@@ -355,6 +389,7 @@ all available modes in $S$.
 
 \bibliographystyle{aaai}
 \bibliography{refs}
+
 
 
 \end{document}
