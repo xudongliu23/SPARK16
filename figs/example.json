@@ -1,0 +1,21 @@
+{
+	"constraints": {
+		"type":"after",
+		"value": [
+			{
+				"type":"or",
+				"value": [
+					{"type":"=", "variable":"M", "value":"b"},
+					{"type":"=",	"variable":"M",	"value":"p"}
+				]
+			},
+			{
+				"type":"always",
+				"value": {
+					"type":"not",
+					"value": {"type": "=", "variable": "M", "value": "c"}
+				}
+			}
+		]
+	}
+}

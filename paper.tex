@@ -14,6 +14,7 @@
 \usepackage{ccicons}
 \usepackage{todonotes}
 \usepackage{amsfonts}
+\usepackage{framed}
 
 \frenchspacing
 \setlength{\pdfpagewidth}{8.5in}
@@ -51,7 +52,7 @@
 \newcommand{\thmref}[1]{Theorem~\ref{thm:#1}}
 \newcommand{\propref}[1]{Proposition~\ref{prop:#1}}
 \newcommand{\corref}[1]{Corollary~\ref{cor:#1}}
-\newcommand{\eqtref}[1]{Equation~\ref{eq:#1}}
+\newcommand{\eqtref}[1]{Equation~\ref{eqt:#1}}
 
  \begin{document}
 % The file aaai.sty is the style file for AAAI Press 
@@ -161,6 +162,16 @@ Finally, the planner uses a weighted sum, called \tit{preferential cost function
 over several cost metrics (e.g., time spend biking, fare on public transit, 
 and overall crimes walking through) which can be re-weighted based
 on different user preferences. 
+
+Our paper is organized as follows.
+In the next section, we present what it means for a planner to be extensible
+and formally define the method to incorporating new metrics into the planner.
+In the following section, we discuss the two aspects of personalization
+in trip planning: constraints and preferences, and how they are modeled and
+reasoned with in the setting of multi-modal trip planning.
+We then move on to describe the system structure of our graph-search based planner,
+and show results obtained from our planner in various occassions.
+Finally, we conclude by outlining some future research directions.
 
 %\begin{itemize}
 %	\item What's the problem: personalized trip planning: find trips that
@@ -294,9 +305,10 @@ Note that we have $\varphi_1 \cA \varphi_2$, and it means that
 A natural constraint in trip planning could be ``In this trip I will not drive a car 
 after biking or taking the public transit."
 In LTL, such constraint can be translated into an LTL formula
-\begin{align*}
+\begin{equation}
+\label{eqt:ex}
 	\psi = ((M=b) \lor (M=p)) \,\cA\, (\Box (\neg (M=c))).
-\end{align*}
+\end{equation}
 
 As the actions in trip planning is limited to taking different transportation modes,
 in our definition of the semantics of LTL
@@ -359,7 +371,7 @@ graph-based search engine in our trip planner as follows.
 								&+ (D_\gas + D_\public + \ldots) \\
 								&+ \beta_2 * (A_\SUM + \ldots),
 	\end{aligned}
-	\label{eq:pcf}
+	\label{eqt:pcf}
 \end{equation}
 where $\alpha_i$ are real numbers representing the relations among different time pieces,
 and $\beta_1$ ($\beta_2$) is the ratio that essentially describes how much in dollars a user would pay to
@@ -378,8 +390,8 @@ These questions are as follows.
 	\item How much in dollars would you pay to save an hour in traveling?
 	\item How much in dollars would you pay to avoid an auxiliary event (e.g., crime) in traveling?
 \end{enumerate}
-For instance, the user answers 3, 2, 0.25 and 0.5 to the first four questions in the list above.
-Intuitively, the numbers indicate that the user prefers public transit the most, followed by
+For instance, Alice, an agent, answers 3, 2, 0.25 and 0.5 to the first four questions in the list above.
+Intuitively, the numbers indicate that she prefers public transit the most, followed by
 taxi, driving, biking and walking, in order.
 We show how we can now derive $\alpha_i$'s in \eqtref{pcf}.
 We start with setting $\alpha_\car=1$.
@@ -441,32 +453,150 @@ all available modes in $S$.
     \includegraphics[width=0.8\textwidth]{figs/system.pdf}
   \caption{System Overview\label{fig:system}}
 \end{figure*}
+We designed and implemented a multi-modal trip planning
+system based on a high-performance graph search engine.
+The planner allows user uploads, as well as declarative
+constraints and preferences.
+We now describe the structure of the planning system.
+
+The trip planner takes two types of data as input:
+static data and user-specified request.
+The static input includes Map Data and Transit
+Data.
+Map Data describes the map, a directed graph where 
+nodes are street corners, bus stops and train stations.
+Transit Data is a set of schedules for the buses and trains
+On the other hand, a user provides her request, composed of 
+three parts.
+First, the user enters \tit{from} and \tit{to} locations 
+on the map together with day and time of the start of the trip.  
+Second, the user may upload her auxiliary metric dataset, e.g., crime rates.  
+Lastly, the user specifies her constraints in LTL and preferences as a $\PCF$.
+For example, the constraint 
+could be ``never walk through a bad neighborhood."  Given these 
+inputs, our planner computes an optimal path satisfying 
+all the constraints and optimizing the preferences.
+Note that the request from the user is encapsulated into
+a JSON object.
+
+For instance, the JSON object for the constraint $\psi$ in \eqtref{ex}
+is shown in \figref{exJSON}.
+\begin{figure}[!ht]
+  \centering
+    \includegraphics[width=0.5\textwidth]{figs/exampleJSON.png}
+  \caption{JSON object for constraint $\psi$ in \eqtref{ex}\label{fig:exJSON}}
+\end{figure}
+
 
 \subsection{Results}
-First, we show resulting route for Alice in \figref{alice}.
+We present and analyze resulting routes for three agents:
+Alice, Bob, and Cal.
+This is assuming no auxiliary metric datasets uploaded
+so that the agents focus on time and fare.
+Fixing their where and when information, we show how
+agents' different constraints and preferences affect
+their optimal routes computed by our planner.
+Their where and when are set so that they all plan to
+travel from San Jose International Airport (SJC) in
+San Jose, to Pier 39 in San Francisco.
+Note that the natural constraint $\psi$ in \eqtref{ex} 
+is implicitly imposed on all cases.
+
+Agent Alice has only one constraint that she does not 
+have a car; thus, driving to her is never available during this trip.
+Per her preferences, Alice provides her thoughts as earlier;
+that is, public transportation is preferred to taxi, which is
+better than biking, preferred to walking.
+What's more, she decides that she would sacrifice thirty dollars
+to save one hour during the trip.
+
+The resulting route for Alice is included in \figref{alice}.
+The solution takes 2 hours 7 minutes and 18 dollars 94 cents.
+It is optimal in the sense the combined value of time
+and fare is minimal among all paths from SJC to Pier 39.
+
 \begin{figure}[!ht]
   \centering
     \includegraphics[width=0.5\textwidth]{figs/result_Alice.pdf}
   \caption{Resulting route for Alice\label{fig:alice}}
 \end{figure}
 
-Second, we show resulting route for Bob in \figref{bob}.
+Like Alice, Bob is constrained that he will not drive a car in his travel,
+and his dollar per hour is thirty.
+Moreover, Bob makes his mind to have some workout with his bike and
+dictates that he will bike for between one and two hours.
+He expresses his preferences: biking and public transit are the most
+preferred, next is taxi, and the least preferred is walking.
+Similarly, he has done so by answering the aforementioned elicitation questions.
+
+The result for Bob is depicted in \figref{bob}.
+It spans 2 hours 57 minutes in time with the fare of 29 dollars 17 cents.
+It is so, seemingly worse than what Alice achieved, only because Bob has
+the constraint that he will for sure bike for one to two hours, and
+the preferences that put biking the most satisfying mode.
+
 \begin{figure}[!ht]
   \centering
     \includegraphics[width=0.5\textwidth]{figs/result_Bob.pdf}
   \caption{Resulting route for Bob\label{fig:bob}}
 \end{figure}
 
-Third, we show resulting route for Cal in \figref{cal}.
+
+Agent Cal will also not use a car in the trip.
+He affirms that time is greatly valuable and one hour is measured
+to 500 dollars, although his budget is restricted to 50.
+Cal's preferences are that the most preferred are public transit
+and taxi, and the next preferred are walking and biking that
+are equivalent.
+
+Refer to \figref{cal} for the optimal path for Cal.
+This route, stretching 1 hour 48 minutes, is the most time-saving one 
+compared with the previous two, at the price of 49 dollars 91 cents.
+This is due to the constraint that Cal can spend up to 50 dollars,
+as well as his preferences and vale of time being high.
+
 \begin{figure}[!ht]
   \centering
     \includegraphics[width=0.5\textwidth]{figs/result_Cal.pdf}
   \caption{Resulting route for Cal\label{fig:cal}}
 \end{figure}
 
+\subsubsection{Auxiliary Metric}
+When the user of the planner is interested in metrics other than
+the ones offered already (i.e., time and fare), she might discover
+new metrics (e.g., crime rates and pollution statistics), upload
+them into the planner, and retrieve optimal plans taking these
+metrics into account.  One scenario of this approach is the following.
+
+Our agent needs to commute back home at night.
+
+\begin{figure}[!ht]
+  \centering
+    \includegraphics[width=0.5\textwidth]{figs/crime.pdf}
+  \caption{Optimal route considering crime rates\label{fig:crime}}
+\end{figure}
+
 
 
 \section{Conclusion and Future Work}
+In multi-modal trip planning, it is vital for the planner to enable
+users to integrate new metrics of interest into the existing map,
+and to express constraints and preferences over which optimal
+routes are computed.
+In our work, we designed and built a graph-search based, extensible
+and personalizable multi-modal trip planner that utilizes linear
+temporal logic and preferential cost
+function to model user constraints and preferences.
+
+As a note on the future work, we plan to explore techniques in planning
+for computing multiple routes that are diverse with bounded difference of costs.
+Continuing this direction, we intend to study the problem of learning the
+$\PCF$ coefficients using the observations of the decisions the user made among
+the computed paths. (It is reasonable to assume that routes picked by the user
+are preferred to others, and these observations could contribute to the learning
+problem.)
+Also interesting is to introduce traffic information into the planner
+to support real-time multi-agent concurrent trip planning.
 
 
 \bibliographystyle{aaai}
