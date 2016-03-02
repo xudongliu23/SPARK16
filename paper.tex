@@ -26,6 +26,8 @@
 \newcommand{\aux}{\mathit{aux}}
 \newcommand{\dist}{\mathit{dist}}
 \newcommand{\cA}{\mathcal{A}}
+\newcommand{\cU}{\mathcal{U}}
+\newcommand{\cP}{\mathcal{P}}
 \newcommand{\tit}[1]{\textit{#1}}
 \newcommand{\IFF}{\textit{iff}}
 \newcommand{\IF}{\textit{if}}
@@ -224,16 +226,35 @@ and express her constraints and preferences in hope of a preferred trip plan.
   \caption{Crime rates in San Francisco\label{fig:sf_crime}}
 \end{figure}
 
-Formally, let $A$ be the auxiliary set of lat-long pairs, 
-$N$ a node in our planner and $r$ the effective radius.
-We first compute the set $P$ of auxiliary points such that
-$P \subseteq A$ and $\dist(p,N)<r$ for all $p \in P$.
-Then, the total score of auxiliary data for $N$ with respect to $P$ and $r$,
-denoted by $S_\aux(N,P,r)$, is computed as follows.
+Formally, let $\cU$ be the uploaded auxiliary dataset of lat-long pairs, 
+$N=(x_N,y_N)$ a node in our planner and $r$ the effective radius.
+We first compute the set $\cP \subseteq A$ of auxiliary points such that,
+for every node $P \in \cP$, the Euclidean distance between $N$ and $P$
+is within $r$.
+Then, the score of auxiliary data for $N$ with respect to $\cP$ and $r$,
+denoted by $S(N,\cP,r)$, is computed as follows.
 
-\begin{equation}
-	S_\aux(N,P,r) = \sum_{\substack{p \in P}} \Big(1 - \frac{\dist(p,N)}{r}\Big)
-\end{equation}
+\begin{equation*}
+	S(N,\cP,r) = \sum_{\substack{P \in \cP}} 
+		\Big(1 - \frac{\sqrt{(x_N-x_P)^2+(y_N-y_P)^2}}{r}\Big)
+\end{equation*}
+
+Now we turn to \figref{aux} for an instance to show how auxiliary data
+are integrated into the graph using the equation above.
+In \figref{aux}, we have the green nodes denoting the graph nodes, 
+and the red nodes the new auxiliary nodes that represent locations
+of criminal events.
+For node $N$, there are three red nodes within its neighborhood of
+radius of $r$; thus, we have $\cP=\{P_1,P_2,P_3\}$.
+We assume $r$ is 100 feet, and the distances from $N$ to $P_1$,
+$P_2$ and $P_3$ are 25, 80 and 90 feet, respectively.
+Then, the crime score of $S(N,\cP,r)$ is $1.05$.
+
+\begin{figure}[!ht]
+  \centering
+    \includegraphics[width=0.4\textwidth]{figs/aux.pdf}
+  \caption{Integrating uploaded data\label{fig:aux}}
+\end{figure}
 
 
 \section{Personalizability}
@@ -269,8 +290,8 @@ LTL formulas are defined recursively as follows.
 Note that we have $\varphi_1 \cA \varphi_2$, and it means that
 ``$\varphi_2$ holds right after $\varphi_1$ holds."
 
-An intuitive constraint in trip planning could be ``I will never drive after biking or
-taking the public transit."
+A natural constraint in trip planning could be ``In this trip I will not drive a car 
+after biking or taking the public transit."
 In LTL, such constraint can be translated into an LTL formula
 \begin{align*}
 	\psi = ((M=b) \lor (M=p)) \,\cA\, (\Box (\neg (M=c))).
@@ -347,13 +368,19 @@ To gather these coefficients ($\alpha_i$ and $\beta_i$) in our $\PCF$, we design
 elicit these numbers from the user.
 
 \subsection{Reasoning with Constraints and Preferences}
-\begin{itemize}
-	\setlength\itemsep{1pt}
-	\item Describe why and how we integrate constraints and preferences into A*.
-\end{itemize}
+%\begin{itemize}
+%	\setlength\itemsep{1pt}
+%	\item Describe why and how we integrate constraints and preferences into A*.
+%\end{itemize}
+
+\begin{figure}[!ht]
+  \centering
+    \includegraphics[width=0.4\textwidth]{figs/Astar.pdf}
+  \caption{Adjusted A*\label{fig:astar}}
+\end{figure}
 
 We leveraged the widely-used A* search algorithm on top of our high-performance graph search
-engine.  The A* algorithm incorporates the following cost function.
+engine (cf. \figref{astar}).  The A* algorithm incorporates the following cost function.
 \begin{equation}
 	f(S) = g(S) + h(S),
 \end{equation}
@@ -365,7 +392,6 @@ at expansion of the search tree.
 To guide the search engine, we set $g(S)=\PCF(S)$ and $h(S)$ the minimum estimate among
 all available modes in $S$.
 
-
 %\section{User Study}
 %\begin{itemize}
 %	\setlength\itemsep{1pt}
@@ -373,14 +399,42 @@ all available modes in $S$.
 %				feasibility of the three features.
 %	\item Describe the results.
 %\end{itemize}
-\section{Implementation}
+\section{Implementation and Results}
+%\begin{itemize}
+%	\setlength\itemsep{1pt}
+%	\item Describe the system structure.
+%	\item Describe the input to the system.
+%	\item Describe the output from the system.
+%\end{itemize}
 
-\begin{itemize}
-	\setlength\itemsep{1pt}
-	\item Describe the system structure.
-	\item Describe the input to the system.
-	\item Describe the output from the system.
-\end{itemize}
+\subsection{System Architecture}
+\begin{figure*}[!ht]
+  \centering
+    \includegraphics[width=0.8\textwidth]{figs/system.pdf}
+  \caption{System Overview\label{fig:system}}
+\end{figure*}
+
+\subsection{Results}
+First, we show resulting route for Alice in \figref{alice}.
+\begin{figure}[!ht]
+  \centering
+    \includegraphics[width=0.5\textwidth]{figs/result_Alice.pdf}
+  \caption{Resulting route for Alice\label{fig:alice}}
+\end{figure}
+
+Second, we show resulting route for Bob in \figref{bob}.
+\begin{figure}[!ht]
+  \centering
+    \includegraphics[width=0.5\textwidth]{figs/result_Bob.pdf}
+  \caption{Resulting route for Bob\label{fig:bob}}
+\end{figure}
+
+Third, we show resulting route for Cal in \figref{cal}.
+\begin{figure}[!ht]
+  \centering
+    \includegraphics[width=0.5\textwidth]{figs/result_Cal.pdf}
+  \caption{Resulting route for Cal\label{fig:cal}}
+\end{figure}
 
 
 
