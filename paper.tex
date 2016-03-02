@@ -51,26 +51,27 @@
 \newcommand{\thmref}[1]{Theorem~\ref{thm:#1}}
 \newcommand{\propref}[1]{Proposition~\ref{prop:#1}}
 \newcommand{\corref}[1]{Corollary~\ref{cor:#1}}
+\newcommand{\eqtref}[1]{Equation~\ref{eq:#1}}
 
  \begin{document}
 % The file aaai.sty is the style file for AAAI Press 
 % proceedings, working notes, and technical reports.
 %
 \title{On Extensibility and Personalizability of Multi-Modal Trip Planning}
-\author{
-	Xudong Liu\\
-	Department of Computer Science\\
-	University of Kentucky\\
-	329 Rose Street\\
-	Lexington, KY 40506\\
-	USA
-	\And
-	PARC People\\
-	Palo Alto Research Center\\
-	3333 Coyote Hill Road\\
-	Palo Alto, CA 94304\\
-	USA
-}
+%\author{
+%	Xudong Liu\\
+%	Department of Computer Science\\
+%	University of Kentucky\\
+%	329 Rose Street\\
+%	Lexington, KY 40506\\
+%	USA
+%	\And
+%	PARC People\\
+%	Palo Alto Research Center\\
+%	3333 Coyote Hill Road\\
+%	Palo Alto, CA 94304\\
+%	USA
+%}
 \maketitle
 \begin{abstract}
 	Trip planning is a practical task that has drawn
@@ -324,7 +325,7 @@ Finally, we know $\sigma_3 \models \psi$, as the mode is always neither biking n
 
 \begin{figure}[!ht]
   \centering
-    \includegraphics[width=0.5\textwidth]{figs/trajectories.pdf}
+    \includegraphics[width=0.4\textwidth]{figs/trajectories.pdf}
   \caption{State transition diagram\label{fig:trjs}}
 \end{figure}
 
@@ -343,7 +344,7 @@ Finally, we know $\sigma_3 \models \psi$, as the mode is always neither biking n
 
 A state is described as a set of \tit{state variables}.
 The state variables of a state $S$ include the transportation mode $M$ that led to $S$,
-time spent $T$ so far per mode (e.g., $T_\bike$ for biking and $T_\public$ for
+time $T$ spent so far per mode (e.g., $T_\bike$ for biking and $T_\public$ for
 public transit), fare $D$ spent so far per mode (e.g., $D_\gas$ for driving and
 $D_\taxi$ for taking a cab), and variables related to the auxiliary data once uploaded.
 These extra data related variables are metrics such as the sum ($A_\SUM$),
@@ -354,18 +355,45 @@ designed the cost function, called preferential cost function (PCF), that guides
 graph-based search engine in our trip planner as follows.
 \begin{equation}
 	\begin{aligned}
-		\PCF(S) =& \beta_1 * (\alpha_1 \cdot T_\walk + \alpha_2 \cdot T_\wait + \ldots) \\
+		\PCF(S) =& \beta_1 * (\alpha_\walk \cdot T_\walk + \alpha_\bike \cdot T_\bike + \ldots) \\
 								&+ (D_\gas + D_\public + \ldots) \\
 								&+ \beta_2 * (A_\SUM + \ldots),
 	\end{aligned}
+	\label{eq:pcf}
 \end{equation}
 where $\alpha_i$ are real numbers representing the relations among different time pieces,
 and $\beta_1$ ($\beta_2$) is the ratio that essentially describes how much in dollars a user would pay to
 save an hour (an auxiliary data, respectively).
 
 \subsubsection{Preference Elicitation}
-To gather these coefficients ($\alpha_i$ and $\beta_i$) in our $\PCF$, we designed interface to
+To gather these coefficients ($\alpha_i$'s and $\beta_i$'s) in our $\PCF$, we designed interface to
 elicit these numbers from the user.
+It asks the user questions and collect answers from the user to derive the coefficients.
+These questions are as follows.
+\begin{enumerate}
+	\item One hr of walking $=$ \underline{\hspace{1cm}} hrs of driving?
+	\item One hr of biking $=$ \underline{\hspace{1cm}} hrs of driving?
+	\item One hr of public transit $=$ \underline{\hspace{1cm}} hrs of driving?
+	\item One hr of taxi $=$ \underline{\hspace{1cm}} hrs of driving?
+	\item How much in dollars would you pay to save an hour in traveling?
+	\item How much in dollars would you pay to avoid an auxiliary event (e.g., crime) in traveling?
+\end{enumerate}
+For instance, the user answers 3, 2, 0.25 and 0.5 to the first four questions in the list above.
+Intuitively, the numbers indicate that the user prefers public transit the most, followed by
+taxi, driving, biking and walking, in order.
+We show how we can now derive $\alpha_i$'s in \eqtref{pcf}.
+We start with setting $\alpha_\car=1$.
+Now, since one hour of walking is equivalent to 3 hours of walking,
+we have $\alpha_\walk \times 1 = \alpha_\car \times 3$;
+hence, we derive $\alpha_\walk = 3$.
+Similarly, we have $\alpha_\bike = 2$, $\alpha_\public = 0.25$,
+and $\alpha_\taxi = 0.5$.
+Computing $\beta_1$ and $\beta_1$ is straightforward.
+Indeed, function $\PCF$ with the input of time, fare and
+auxiliary metric pieces boils down to monetary cost,
+and the planner computes the best path by optimize
+based on this overall monetary cost in the searching
+process.
 
 \subsection{Reasoning with Constraints and Preferences}
 %\begin{itemize}
