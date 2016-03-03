@@ -230,7 +230,9 @@ system to take care of criminal statistics so that some level of safety
 of the resulting routes is guaranteed.
 For instance, a user traveling through the downtown area of San Francisco
 around midnight may want to upload a data set of crimes (cf. \figref{sf_crime}), 
-and express her constraints and preferences in hope of a preferred trip plan.
+and express her constraints and preferences in hope of a safer trip plan.
+Note that in \figref{sf_crime} bad areas are the colored circles, whose
+integer labels represent numbers of crimes in corresponding areas.
 
 \begin{figure}[!ht]
   \centering
@@ -454,7 +456,8 @@ all available modes in $S$.
   \caption{System Overview\label{fig:system}}
 \end{figure*}
 We designed and implemented a multi-modal trip planning
-system based on a high-performance graph search engine.
+system (cf. \figref{system}) based on a 
+high-performance graph search engine.
 The planner allows user uploads, as well as declarative
 constraints and preferences.
 We now describe the structure of the planning system.
@@ -568,7 +571,22 @@ new metrics (e.g., crime rates and pollution statistics), upload
 them into the planner, and retrieve optimal plans taking these
 metrics into account.  One scenario of this approach is the following.
 
-Our agent needs to commute back home at night.
+Our agent needs to travel without a car across San Francisco downtown at night.
+For her, safety is important.
+Having found the crime statistics for the area, the agent uploads
+the data as a new auxiliary metric into the map.
+By specifying that she will never walk through a neighborhood
+with more than fifteen crimes over the last month, and that
+she would sacrifice a quarter to avoid one crime incident,
+the agent tells the planner to come up with a relatively safe
+route. An example is shown in \figref{crime}, where the agent
+needs to start at the east of downtown and travel across the area
+to arrive at the west side.  
+The computed path is represented by the line colored by black,
+blue and green, denoting taxi, public transit and biking, respectively.
+Clearly, this path routes away from crime-heavy areas and achieves
+optimality in that the combined metrics -- time, fare and crime rates,
+uploaded and personalized by the user -- is minimal among all possibilities.
 
 \begin{figure}[!ht]
   \centering
