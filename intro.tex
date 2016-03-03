@@ -1,0 +1,118 @@
+Trip planning, as an application of planning and scheduling,
+has seen substantive implementations by researchers and
+developers\cite{bast2015route}.
+Some of the planning systems are \tit{multi-modal}; that is,
+combining distinct transportation modes, the trip planners
+compute optimal routes from sources to destinations.
+This notion of ``optimality" generally refers to the computed routes
+having minimal total time or total fare.
+
+However, in the eyes of a user, it may be more faceted than just
+``fastest" or ``cheapest."
+For instance, for a college student who specifies that she will
+only walk or take public transit in a trip from Palo Alto to
+San Francisco, the computed plan is not necessarily the fastest
+(e.g., taking a cab could be faster)
+or the cheapest (e.g., walking all the way has no fare).
+This happens when a user tells the planner her hard constraints,
+called \tit{constraints}.  
+The planner then needs to either satisfy the 
+constraints in the search process or return failure because they are
+over-restrictive.
+Moreover, the user might want to further customize the planner by
+describing soft constraints, called \tit{preferences}.
+For example, an agent wants to travel from school to
+downtown, and prefers biking to taking the bus.
+Thus, a trip with more biking than bus may be considered better for
+the agent than the one with more bus than biking.
+In this case, the planner will need to accommodate user preferences
+whenever possible in the search of optimal solutions.
+
+Representing and reasoning about constraints and preferences are
+fundamental to decision making in automated planning and scheduling
+in artificial intelligence.
+Son and Pontelli presented a declarative preference language, 
+$\mathcal{PP}$, to represent ordinal preferences (e.g., basic desires,
+atomic preferences and general preferences) between trajectories of 
+a planning problem\cite{son2004planning}.
+Bienvenu et al. proposed a first-order preference language, $\mathcal{LPP}$, 
+extending $\mathcal{PP}$ by allowing the specification of quantified qualitative
+preferences\cite{bienvenu2011specifying}.
+Modesti and Sciomachen introduced an ad hoc utility function for weighing
+the arcs both with their time and fare\cite{modesti1998utility}.
+This relationship between time and fare in the setting of transportation
+was studied, and economic models capturing the trade-off between the two
+was presented\cite{antoniou2007methodology}.
+
+However, relatively limited effort has been devoted to designing and
+implementing real-world multi-modal trip planners that captures user
+constraints and preferences over the \tit{cost base}, possibly
+extended from the user with auxiliary \tit{cost metrics},
+such as crime rates and pollution statistics.
+One notable work by Nina et al.\cite{nina2016no} introduced
+system \tit{Autobahn} for generating scenic routes using
+Google Street View images to train a deep neural network
+to classify route segments based on their visual features.
+Although \tit{Autobahn} computes scenic routes using computer
+vision techniques, it does not account for extensibility
+and personalizability.
+
+Using a high-performance graph search
+engine\cite{zhou2011dynamic}, we designed and implemented a 
+multi-modal trip planner that uses pure
+graph-search. This allows us to flexibly combine various modes
+(e.g., walk, bike, car, public transit, and taxi) and 
+declaratively change constraints and preferences. 
+The planner allows the user
+to upload \tit{new} mapping data over which to express
+constraints and preferences.  For instance, a user might upload a map of crime
+in the city, and ask the trip planner to avoid areas where crime is frequent.
+Then, the planner takes constraints expressed in \tit{linear
+temporal logic} to constrain the search space (e.g., never bike after
+transit, and never walk through bad neighborhoods).
+Finally, the planner uses a weighted sum, called \tit{preferential cost function}, 
+over several cost metrics (e.g., time spend biking, fare on public transit, 
+and overall crimes walking through) which can be re-weighted based
+on different user preferences. 
+
+Our paper is organized as follows.
+In the next section, we present what it means for a planner to be extensible
+and formally define the method to incorporating new metrics into the planner.
+In the following section, we discuss the two aspects of personalization
+in trip planning: constraints and preferences, and how they are modeled and
+reasoned with in the setting of multi-modal trip planning.
+We then move on to describe the system structure of our graph-search based planner,
+and show results obtained from our planner in various occasions.
+Finally, we conclude by outlining some future research directions.
+
+%\begin{itemize}
+%	\item What's the problem: personalized trip planning: find trips that
+%	  are optimal in the eyes of a user, who doesn't care about mode or
+%	  provider boundaries, and whose preferences may be more faceted than
+%	  ``fastest'' or ``cheapest''.
+%	\item Why is it hard: the computational complexity of searching
+%	  combinations of multiple modes that can be combined freely is high
+%	  (PSPACE-complete\cite{}) which is why existing trip planner exploit problem
+%	  structure (such as only one mode per trip) and predefined
+%	  preferences (optimization metrics)
+%	\item How did we solve it: Using a high-performance graph search
+%	  engine\cite{}, we implemented a multi-modal trip planner that uses pure
+%	  graph-search. This allows us to flexibly combine various modes
+%	  (e.g., car, train, cab, walk) and declarative change soft and hard
+%	  constraints. The planner can take constraints expressed in linear
+%	  temporal logic to constrain the search space (e.g., never bike after
+%	  transit, i.e., I don't want to take my bike on the bus or train).
+%	  The planner uses a weighted sum over several metrics (e.g., time
+%	  overall, time spend on transit, cost) which can be re-weighted based
+%	  on different user preferences. Finally the planner allows the user
+%	  to upload {\em new} mapping data over which to express hard and/or
+%	  soft constraints. For instance, a user might upload a map of crime
+%	  in the city, and ask the trip planner to never walk at night through
+%	  an area where crime is frequent.
+%%	\item How did we evaluate the features and what are the results:
+%%	  ceteris paribus experimentation setup on Amazon Mechanical 
+%%		Turk (MTurk\footnote{\url{http://mturk.amazon.com}}) and results, 
+%%		asking users to pick between two different trips, one being limited by the
+%%	  capabilities of existing planners, and one exhibiting features only
+%%	  available in our trip planner.
+%\end{itemize}
